@@ -62,9 +62,9 @@ module Hedgehog (
   , recheck
   , recheckAt
 
-  , hCheck
-  , hRecheck
-  , hRecheckAt
+  , writeCheck
+  , writeRecheck
+  , writeRecheckAt
 
   , discover
   , discoverPrefix
@@ -198,7 +198,7 @@ import           Hedgehog.Internal.Property (Test, TestT, property, test)
 import           Hedgehog.Internal.Property (TestLimit, withTests)
 import           Hedgehog.Internal.Property (collect, label)
 import           Hedgehog.Internal.Range (Range, Size(..))
-import           Hedgehog.Internal.Runner (check, recheck, recheckAt, checkSequential, checkParallel, hCheck, hRecheck, hRecheckAt)
+import           Hedgehog.Internal.Runner (check, recheck, recheckAt, checkSequential, checkParallel, writeCheck, writeRecheck, writeRecheckAt)
 import           Hedgehog.Internal.Seed (Seed(..))
 import           Hedgehog.Internal.State (Command(..), Callback(..))
 import           Hedgehog.Internal.State (Action, Sequential(..), Parallel(..))

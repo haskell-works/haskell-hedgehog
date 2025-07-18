@@ -15,9 +15,9 @@ module Hedgehog.Internal.Runner (
   , recheck
   , recheckAt
 
-  , hCheck
-  , hRecheck
-  , hRecheckAt
+  , writeCheck
+  , writeRecheck
+  , writeRecheckAt
 
   -- * Running Groups of Properties
   , RunnerConfig(..)
@@ -34,6 +34,7 @@ module Hedgehog.Internal.Runner (
 import           Control.Concurrent.STM (TVar, atomically)
 import qualified Control.Concurrent.STM.TVar as TVar
 import           Control.Exception.Safe (MonadCatch, catchAny)
+import           Control.Monad (void)
 import           Control.Monad.IO.Class (MonadIO(..))
 import           Data.Maybe (isJust)
 
@@ -60,8 +61,6 @@ import           Hedgehog.Internal.Tree (TreeT(..), NodeT(..))
 import           Hedgehog.Range (Size)
 
 import           Language.Haskell.TH.Syntax (Lift)
-import Control.Monad (void)
-import System.IO (Handle, hPutStrLn)
 
 #if mingw32_HOST_OS
 import           System.IO (hSetEncoding, h, stderr, utf8)
@@ -452,53 +451,53 @@ recheckAt seed skip prop0 = do
     checkRegion region color Nothing 0 seed prop
   pure ()
 
-hCheckImpl ::
+writeCheckImpl ::
      MonadIO m
-  => Handle
+  => (String -> IO ())
   -> UseColor
   -> Maybe PropertyName
   -> Size
   -> Seed
   -> Property
   -> m (Report Result)
-hCheckImpl h color name size seed prop =
+writeCheckImpl write color name size seed prop =
   liftIO $ do
     result <- checkReport (propertyConfig prop) size seed (propertyTest prop) $ const (pure ())
     ppresult <- renderResult color name result
-    hPutStrLn h ppresult
+    write ppresult
     pure result
 
-hCheckNamed ::
+writeCheckNamed ::
      MonadIO m
-  => Handle
+  => (String -> IO ())
   -> UseColor
   -> Maybe PropertyName
   -> Maybe Seed
   -> Property
   -> m (Report Result)
-hCheckNamed h color name mseed prop = do
+writeCheckNamed write color name mseed prop = do
   seed <- resolveSeed mseed
-  hCheckImpl h color name 0 seed prop
+  writeCheckImpl write color name 0 seed prop
 
 -- | Check a property.
 --
-hCheck :: MonadIO m => Handle -> Property -> m Bool
-hCheck h prop = do
-  (== OK) . reportStatus <$> hCheckNamed h DisableColor Nothing Nothing prop
+writeCheck :: MonadIO m => (String -> IO ()) -> Property -> m Bool
+writeCheck write prop = do
+  (== OK) . reportStatus <$> writeCheckNamed write DisableColor Nothing Nothing prop
 
 -- | Check a property using a specific size and seed.
 --
-hRecheck :: MonadIO m => Handle -> Size -> Seed -> Property -> m ()
-hRecheck h size seed prop0 = do
+writeRecheck :: MonadIO m => (String -> IO ()) -> Size -> Seed -> Property -> m ()
+writeRecheck write size seed prop0 = do
   color <- detectColor
   let prop = withTests 1 prop0
-  void $ hCheckImpl h color Nothing size seed prop
+  void $ writeCheckImpl write color Nothing size seed prop
 
-hRecheckAt :: MonadIO m => Handle -> Seed -> Skip -> Property -> m ()
-hRecheckAt h seed skip prop0 = do
+writeRecheckAt :: MonadIO m => (String -> IO ()) -> Seed -> Skip -> Property -> m ()
+writeRecheckAt write seed skip prop0 = do
   color <- detectColor
   let prop = withSkip skip prop0
-  void $ hCheckImpl h color Nothing 0 seed prop
+  void $ writeCheckImpl write color Nothing 0 seed prop
 
 -- | Check a group of properties using the specified runner config.
 --
