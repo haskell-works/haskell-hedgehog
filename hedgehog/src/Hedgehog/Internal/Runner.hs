@@ -484,8 +484,7 @@ hCheckNamed h color name mseed prop = do
 --
 hCheck :: MonadIO m => Handle -> Property -> m Bool
 hCheck h prop = do
-  color <- detectColor
-  (== OK) . reportStatus <$> hCheckNamed h color Nothing Nothing prop
+  (== OK) . reportStatus <$> hCheckNamed h DisableColor Nothing Nothing prop
 
 -- | Check a property using a specific size and seed.
 --
