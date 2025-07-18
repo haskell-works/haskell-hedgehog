@@ -92,6 +92,7 @@ library
     Hedgehog.Range
 
     Hedgehog.Internal.Barbie
+    Hedgehog.Internal.Check
     Hedgehog.Internal.Config
     Hedgehog.Internal.Discovery
     Hedgehog.Internal.Distributive
@@ -126,7 +127,7 @@ test-suite test
     test.hs
 
   ghc-options:
-    -Wall -threaded -O2
+    -Wall -threaded
 
   hs-source-dirs:
     test

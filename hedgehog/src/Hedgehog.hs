@@ -60,6 +60,7 @@ module Hedgehog (
 
   , check
   , check2
+  , check3
   , recheck
   , recheckAt
 
@@ -176,6 +177,7 @@ import           Data.Functor.Classes (Eq1, eq1, Ord1, compare1, Show1, showsPre
 
 import           Hedgehog.Internal.Barbie (FunctorB(..), TraversableB(..), Rec(..))
 import           Hedgehog.Internal.Distributive (distributeT)
+import           Hedgehog.Internal.Check (check3)
 import           Hedgehog.Internal.Gen (Gen, GenT, MonadGen(..))
 import           Hedgehog.Internal.HTraversable (HTraversable(..))
 import           Hedgehog.Internal.Opaque (Opaque(..))

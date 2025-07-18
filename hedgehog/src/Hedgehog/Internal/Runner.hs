@@ -208,6 +208,7 @@ skipToShrink (ShrinkPath shrinkPath) updateUI =
   in
     loop 0 shrinkPath
 
+{-# NOINLINE checkReport #-}
 checkReport ::
      forall m.
      MonadIO m
