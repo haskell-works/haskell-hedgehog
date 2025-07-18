@@ -460,9 +460,9 @@ writeCheckImpl ::
   -> Seed
   -> Property
   -> m (Report Result)
-writeCheckImpl _ _ _ size _ prop =
+writeCheckImpl _ _ _ size seed prop =
   liftIO $ do
-    checkReport (propertyConfig prop) size (Seed.from 1) (propertyTest prop) $ const (pure ())
+    checkReport (propertyConfig prop) size seed (propertyTest prop) $ const (pure ())
 
 writeCheckNamed ::
      MonadIO m
@@ -472,9 +472,8 @@ writeCheckNamed ::
   -> Maybe Seed
   -> Property
   -> m (Report Result)
-writeCheckNamed write color name mseed prop = do
-  seed <- resolveSeed mseed
-  writeCheckImpl write color name 0 seed prop
+writeCheckNamed write color name _ prop = do
+  writeCheckImpl write color name 0 (Seed.from 1) prop
 
 -- | Check a property.
 --
