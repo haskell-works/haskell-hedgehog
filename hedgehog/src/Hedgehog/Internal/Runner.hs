@@ -15,6 +15,10 @@ module Hedgehog.Internal.Runner (
   , recheck
   , recheckAt
 
+  , hCheck
+  , hRecheck
+  , hRecheckAt
+
   -- * Running Groups of Properties
   , RunnerConfig(..)
   , checkParallel
@@ -56,9 +60,11 @@ import           Hedgehog.Internal.Tree (TreeT(..), NodeT(..))
 import           Hedgehog.Range (Size)
 
 import           Language.Haskell.TH.Syntax (Lift)
+import Control.Monad (void)
+import System.IO (Handle, hPutStrLn)
 
 #if mingw32_HOST_OS
-import           System.IO (hSetEncoding, stdout, stderr, utf8)
+import           System.IO (hSetEncoding, h, stderr, utf8)
 #endif
 
 -- | Configuration for a property test run.
@@ -446,6 +452,55 @@ recheckAt seed skip prop0 = do
     checkRegion region color Nothing 0 seed prop
   pure ()
 
+hCheckImpl ::
+     MonadIO m
+  => Handle
+  -> UseColor
+  -> Maybe PropertyName
+  -> Size
+  -> Seed
+  -> Property
+  -> m (Report Result)
+hCheckImpl h color name size seed prop =
+  liftIO $ do
+    result <- checkReport (propertyConfig prop) size seed (propertyTest prop) $ const (pure ())
+    ppresult <- renderResult color name result
+    hPutStrLn h ppresult
+    pure result
+
+hCheckNamed ::
+     MonadIO m
+  => Handle
+  -> UseColor
+  -> Maybe PropertyName
+  -> Maybe Seed
+  -> Property
+  -> m (Report Result)
+hCheckNamed h color name mseed prop = do
+  seed <- resolveSeed mseed
+  hCheckImpl h color name 0 seed prop
+
+-- | Check a property.
+--
+hCheck :: MonadIO m => Handle -> Property -> m Bool
+hCheck h prop = do
+  color <- detectColor
+  (== OK) . reportStatus <$> hCheckNamed h color Nothing Nothing prop
+
+-- | Check a property using a specific size and seed.
+--
+hRecheck :: MonadIO m => Handle -> Size -> Seed -> Property -> m ()
+hRecheck h size seed prop0 = do
+  color <- detectColor
+  let prop = withTests 1 prop0
+  void $ hCheckImpl h color Nothing size seed prop
+
+hRecheckAt :: MonadIO m => Handle -> Seed -> Skip -> Property -> m ()
+hRecheckAt h seed skip prop0 = do
+  color <- detectColor
+  let prop = withSkip skip prop0
+  void $ hCheckImpl h color Nothing 0 seed prop
+
 -- | Check a group of properties using the specified runner config.
 --
 checkGroup :: MonadIO m => RunnerConfig -> Group -> m Bool
@@ -458,7 +513,7 @@ checkGroup config (Group group props) =
     updateNumCapabilities (n + 2)
 
 #if mingw32_HOST_OS
-    hSetEncoding stdout utf8
+    hSetEncoding h utf8
     hSetEncoding stderr utf8
 #endif
 
