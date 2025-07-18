@@ -12,6 +12,7 @@
 module Hedgehog.Internal.Runner (
   -- * Running Individual Properties
     check
+  , check2
   , recheck
   , recheckAt
 
@@ -480,6 +481,12 @@ writeCheckNamed write color name _ prop = do
 writeCheck :: MonadIO m => (String -> IO ()) -> Property -> m Bool
 writeCheck write prop = do
   (== OK) . reportStatus <$> writeCheckNamed write DisableColor Nothing Nothing prop
+
+-- | Check a property.
+--
+check2 :: MonadIO m => Property -> m Bool
+check2 prop = do
+  (== OK) . reportStatus <$> liftIO (checkReport (propertyConfig prop) 0 (Seed.from 1) (propertyTest prop) $ const (pure ()))
 
 -- | Check a property using a specific size and seed.
 --
